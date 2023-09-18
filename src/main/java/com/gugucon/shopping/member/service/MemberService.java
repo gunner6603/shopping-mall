@@ -43,6 +43,7 @@ public class MemberService {
         }
     }
 
+    @Transactional
     public void signup(final SignupRequest signupRequest) {
         validatePasswordChecked(signupRequest.getPassword(), signupRequest.getPasswordCheck());
         validateBirthDate(signupRequest.getBirthDate());
