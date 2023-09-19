@@ -1,5 +1,6 @@
 package com.gugucon.shopping.item.domain;
 
+import com.gugucon.shopping.item.infrastructure.SearchCondition;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.member.domain.vo.Gender;
 import org.junit.jupiter.api.DisplayName;

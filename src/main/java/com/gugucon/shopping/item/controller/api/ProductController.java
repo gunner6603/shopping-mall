@@ -1,7 +1,7 @@
 package com.gugucon.shopping.item.controller.api;
 
 import com.gugucon.shopping.common.dto.response.PagedResponse;
-import com.gugucon.shopping.item.domain.SearchCondition;
+import com.gugucon.shopping.item.infrastructure.SearchCondition;
 import com.gugucon.shopping.common.dto.response.SlicedResponse;
 import com.gugucon.shopping.item.dto.response.ProductDetailResponse;
 import com.gugucon.shopping.item.dto.response.ProductResponse;

@@ -4,7 +4,7 @@ import com.gugucon.shopping.common.dto.response.PagedResponse;
 import com.gugucon.shopping.common.dto.response.SlicedResponse;
 import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
-import com.gugucon.shopping.item.domain.SearchCondition;
+import com.gugucon.shopping.item.infrastructure.SearchCondition;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.item.dto.response.ProductDetailResponse;
 import com.gugucon.shopping.item.dto.response.ProductResponse;

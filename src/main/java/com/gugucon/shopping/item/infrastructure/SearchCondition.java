@@ -1,7 +1,8 @@
-package com.gugucon.shopping.item.domain;
+package com.gugucon.shopping.item.infrastructure;
 
 import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
+import com.gugucon.shopping.item.domain.SortKey;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.member.domain.vo.Gender;
 import lombok.AccessLevel;
@@ -16,20 +17,16 @@ import org.springframework.data.domain.Sort;
 @Getter
 public class SearchCondition {
 
-    private static final Sort SORT_BY_RATE = SortKey.RATE.getSort();
-    private static final Sort SORT_BY_ORDER_COUNT = SortKey.ORDER_COUNT_DESC.getSort();
+    private static final SortKey SORT_BY_RATE = SortKey.RATE;
+    private static final SortKey SORT_BY_ORDER_COUNT = SortKey.ORDER_COUNT_DESC;
 
     private final String keyword;
     private final BirthYearRange birthYearRange;
     private final Gender gender;
     private final Pageable pageable;
 
-    public Sort getSort() {
-        return pageable.getSort();
-    }
-
     public void validateSort() {
-        if (!SortKey.contains(getSort())) {
+        if (!SortKeyUtils.isValid(getSort())) {
             throw new ShoppingException(ErrorCode.INVALID_SORT);
         }
     }
@@ -41,14 +38,22 @@ public class SearchCondition {
     }
 
     public boolean isSortedByRate() {
-        return pageable.getSort().equals(SORT_BY_RATE);
+        return getSortKey().equals(SORT_BY_RATE);
     }
 
     public boolean isSortedByOrderCount() {
-        return pageable.getSort().equals(SORT_BY_ORDER_COUNT);
+        return getSortKey().equals(SORT_BY_ORDER_COUNT);
     }
 
     public boolean hasValidFilters() {
         return birthYearRange != null && gender != null;
+    }
+
+    private Sort getSort() {
+        return pageable.getSort();
+    }
+
+    private SortKey getSortKey() {
+        return SortKeyUtils.map(getSort());
     }
 }

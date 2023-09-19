@@ -1,11 +1,9 @@
 package com.gugucon.shopping.item.domain;
 
-import static org.springframework.data.domain.Sort.Direction.ASC;
-import static org.springframework.data.domain.Sort.Direction.DESC;
-
-import java.util.Arrays;
 import lombok.Getter;
-import org.springframework.data.domain.Sort;
+
+import static com.gugucon.shopping.item.domain.SortKey.Direction.ASC;
+import static com.gugucon.shopping.item.domain.SortKey.Direction.DESC;
 
 @Getter
 public enum SortKey {
@@ -16,14 +14,17 @@ public enum SortKey {
     PRICE_ASC(ASC, "price"),
     RATE(DESC, "rate");
 
-    private final Sort sort;
+    private final Direction direction;
+    private final String key;
 
-    SortKey(final Sort.Direction direction, String key) {
-        this.sort = Sort.by(direction, key);
+    SortKey(final Direction direction, final String key) {
+        this.direction = direction;
+        this.key = key;
     }
 
-    public static boolean contains(final Sort sort) {
-        return Arrays.stream(SortKey.values())
-                .anyMatch(sortKey -> sortKey.sort.equals(sort));
+    public String getDirectionName() {
+        return direction.name();
     }
+
+    public enum Direction {ASC, DESC}
 }
