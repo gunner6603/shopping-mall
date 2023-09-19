@@ -13,7 +13,7 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 
 @Slf4j
-public final class TossPayValidator implements PayValidator {
+public final class TossPayValidator {
 
     private static final String VALIDATE_URL = "https://api.tosspayments.com/v1/payments/confirm";
     private static final String BASIC_AUTH_DELIMITER = ":";
@@ -33,7 +33,6 @@ public final class TossPayValidator implements PayValidator {
         httpHeaders.setBasicAuth(encoder.encodeToString((secretKey + BASIC_AUTH_DELIMITER).getBytes()));
     }
 
-    @Override
     public void validatePayment(final TossPayRequest tossPayRequest) {
         final TossValidationRequest tossValidationRequest = TossValidationRequest.of(tossPayRequest);
         final HttpEntity<TossValidationRequest> request = new HttpEntity<>(tossValidationRequest, httpHeaders);

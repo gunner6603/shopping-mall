@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TossPayProvider {
 
-    private final PayValidator payValidator;
+    private final TossPayValidator payValidator;
     private final OrderIdTranslator orderIdTranslator;
     private final CustomerKeyGenerator customerKeyGenerator;
 
