@@ -1,7 +1,9 @@
 package com.gugucon.shopping.order.scheduler;
 
+import com.gugucon.shopping.order.domain.entity.LastScanTime;
 import com.gugucon.shopping.order.domain.entity.Order;
 import com.gugucon.shopping.order.domain.entity.Order.OrderStatus;
+import com.gugucon.shopping.order.repository.LastScanTimeRepository;
 import com.gugucon.shopping.order.repository.OrderRepository;
 import com.gugucon.shopping.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +29,13 @@ public class OrderCancelService {
 
     private final OrderService orderService;
     private final OrderRepository orderRepository;
-    private LocalDateTime lastScanTime;
+    private final LastScanTimeRepository lastScanTimeRepository;
 
     @Transactional
     public void cancelIncompleteOrders() {
         log.info("cancelling started.");
-        final LocalDateTime scanStartTime = lastScanTime == null ? DEFAULT_SCAN_START_TIME : lastScanTime;
+        final LastScanTime lastScanTime = getLastScanTime();
+        final LocalDateTime scanStartTime = lastScanTime.hasNullValue() ? DEFAULT_SCAN_START_TIME : lastScanTime.getTimeValue();
         final LocalDateTime scanEndTime = LocalDateTime.now().minus(CANCEL_INTERVAL);
 
         final List<Order> incompleteOrders = orderRepository.findAllByStatusInAndLastModifiedAtBetweenWithOrderItems(
@@ -50,7 +53,7 @@ public class OrderCancelService {
         }
 
         if (allSucceeded) {
-            lastScanTime = scanEndTime;
+            lastScanTime.update(scanEndTime);
             log.info("no exception thrown while cancelling order");
         }
 
@@ -70,5 +73,11 @@ public class OrderCancelService {
             return false;
         }
         return true;
+    }
+
+    private LastScanTime getLastScanTime() {
+        return lastScanTimeRepository.findAll().stream()
+                .findAny()
+                .orElseGet(() -> lastScanTimeRepository.save(LastScanTime.builder().build()));
     }
 }

@@ -2,7 +2,9 @@ package com.gugucon.shopping.order.scheduler;
 
 import com.gugucon.shopping.item.domain.entity.CartItem;
 import com.gugucon.shopping.order.domain.PayType;
+import com.gugucon.shopping.order.domain.entity.LastScanTime;
 import com.gugucon.shopping.order.domain.entity.Order;
+import com.gugucon.shopping.order.repository.LastScanTimeRepository;
 import com.gugucon.shopping.order.repository.OrderRepository;
 import com.gugucon.shopping.order.service.OrderService;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +21,6 @@ import static com.gugucon.shopping.utils.DomainUtils.createCartItem;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.util.ReflectionTestUtils.getField;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 @ExtendWith(MockitoExtension.class)
 class OrderCancelServiceTest {
@@ -30,6 +31,9 @@ class OrderCancelServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private LastScanTimeRepository lastScanTimeRepository;
+
     @InjectMocks
     private OrderCancelService orderCancelService;
 
@@ -37,8 +41,12 @@ class OrderCancelServiceTest {
     @DisplayName("주문을 취소하는 데 실패하면 마지막 스캔 시점이 업데이트되지 않는다.")
     void cancelIncompleteOrdersFail_doNotUpdateLastScanTime() {
         // given
-        final LocalDateTime lastScanTime = LocalDateTime.now().minusHours(1);
-        setField(orderCancelService, "lastScanTime", lastScanTime);
+        final LocalDateTime lastScanTimeValue = LocalDateTime.now().minusHours(1);
+        final LastScanTime lastScanTime = LastScanTime.builder()
+                .id(1L)
+                .timeValue(lastScanTimeValue)
+                .build();
+        doReturn(List.of(lastScanTime)).when(lastScanTimeRepository).findAll();
 
         final CartItem cartItem = createCartItem();
         final List<CartItem> cartItems = List.of(cartItem);
@@ -53,6 +61,6 @@ class OrderCancelServiceTest {
         orderCancelService.cancelIncompleteOrders();
 
         // then
-        assertThat(getField(orderCancelService, "lastScanTime")).isEqualTo(lastScanTime);
+        assertThat(lastScanTime.getTimeValue()).isEqualTo(lastScanTimeValue);
     }
 }

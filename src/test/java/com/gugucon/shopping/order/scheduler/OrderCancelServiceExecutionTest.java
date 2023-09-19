@@ -1,10 +1,6 @@
 package com.gugucon.shopping.order.scheduler;
 
-import static com.gugucon.shopping.order.domain.entity.Order.OrderStatus.CANCELED;
-import static com.gugucon.shopping.order.domain.entity.Order.OrderStatus.CREATED;
-import static com.gugucon.shopping.order.domain.entity.Order.OrderStatus.PAYING;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.gugucon.shopping.common.domain.entity.BaseTimeEntity;
 import com.gugucon.shopping.common.domain.vo.Quantity;
 import com.gugucon.shopping.item.domain.entity.CartItem;
 import com.gugucon.shopping.item.domain.entity.Product;
@@ -13,14 +9,12 @@ import com.gugucon.shopping.member.domain.entity.Member;
 import com.gugucon.shopping.member.domain.vo.Gender;
 import com.gugucon.shopping.member.repository.MemberRepository;
 import com.gugucon.shopping.order.domain.PayType;
+import com.gugucon.shopping.order.domain.entity.LastScanTime;
 import com.gugucon.shopping.order.domain.entity.Order;
+import com.gugucon.shopping.order.repository.LastScanTimeRepository;
 import com.gugucon.shopping.order.repository.OrderItemRepository;
 import com.gugucon.shopping.order.repository.OrderRepository;
 import com.gugucon.shopping.utils.DomainUtils;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +23,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static com.gugucon.shopping.order.domain.entity.Order.OrderStatus.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @EnableJpaAuditing(setDates = false, modifyOnCreate = false)
@@ -52,27 +54,33 @@ class OrderCancelServiceExecutionTest {
     @Autowired
     private OrderCancelService orderCancelService;
 
+    @Autowired
+    private LastScanTimeRepository lastScanTimeRepository;
+
     @AfterEach
     void tearDown() {
         orderItemRepository.deleteAll();
         orderRepository.deleteAll();
         memberRepository.deleteAll();
         productRepository.deleteAll();
+        lastScanTimeRepository.deleteAll();
     }
 
     @Test
     @DisplayName("30분 이상 전에, 그리고 마지막 스캔 시각 후에 마지막으로 변경된 결제중 주문이면 취소하고 재고를 복구한다.")
     void cancelIncompleteOrders_cancelPayingOrderLastModifiedMoreThan30MinutesAndAfterLastScanTime() {
         // given
-        final LocalDateTime lastScanTime = LocalDateTime.now().minusHours(1);
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        final LocalDateTime lastScanTimeValue = LocalDateTime.now().minusHours(1);
+        final LastScanTime lastScanTime = LastScanTime.builder()
+                .timeValue(lastScanTimeValue)
+                .build();
+        lastScanTimeRepository.save(lastScanTime);
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -81,12 +89,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusMinutes(45);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         final Quantity orderQuantity = order.getOrderItems().get(0).getQuantity();
         order.startPay(PayType.TOSS);
@@ -106,15 +112,17 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("마지막으로 변경된 지 30분이 되지 않은 결제중 주문이면 취소되지 않는다.")
     void cancelIncompleteOrders_doNotCancelPayingOrderLastModifiedLessThan30MinutesAgo() {
         // given
-        final LocalDateTime lastScanTime = LocalDateTime.now().minusHours(1);
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        final LocalDateTime lastScanTimeValue = LocalDateTime.now().minusHours(1);
+        final LastScanTime lastScanTime = LastScanTime.builder()
+                .timeValue(lastScanTimeValue)
+                .build();
+        lastScanTimeRepository.save(lastScanTime);
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -123,12 +131,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusMinutes(15);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         order.startPay(PayType.TOSS);
         final Order persistOrder = orderRepository.save(order);
@@ -147,15 +153,17 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("마지막 스캔 시점 전에 마지막으로 변경된 결제중 주문이면 취소되지 않는다.")
     void cancelIncompleteOrders_doNotCancelPayingOrderLastModifiedBeforeLastScanTime() {
         // given
-        final LocalDateTime lastScanTime = LocalDateTime.now().minusHours(1);
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        final LocalDateTime lastScanTimeValue = LocalDateTime.now().minusHours(1);
+        final LastScanTime lastScanTime = LastScanTime.builder()
+                .timeValue(lastScanTimeValue)
+                .build();
+        lastScanTimeRepository.save(lastScanTime);
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -164,12 +172,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusHours(2);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         order.startPay(PayType.TOSS);
         final Order persistOrder = orderRepository.save(order);
@@ -188,15 +194,13 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("처음 실행되는 경우 30분 이상 전에 마지막으로 변경된 결제중 주문이면 취소하고 재고를 복구한다.")
     void cancelIncompleteOrders_cancelPayingOrderLastModifiedMoreThan30MinutesAgo_initialExecution() {
         // given
-        final LocalDateTime lastScanTime = null;
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        lastScanTimeRepository.save(LastScanTime.builder().build());
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -205,12 +209,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusHours(2);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         final Quantity orderQuantity = order.getOrderItems().get(0).getQuantity();
         order.startPay(PayType.TOSS);
@@ -230,15 +232,13 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("처음 실행되는 경우 마지막으로 변경된 지 30분이 되지 않은 결제중 주문이면 취소되지 않는다.")
     void cancelIncompleteOrders_doNotCancelPayingOrderLastModifiedLessThan30MinutesAgo_initialExecution() {
         // given
-        final LocalDateTime lastScanTime = null;
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        lastScanTimeRepository.save(LastScanTime.builder().build());
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -247,12 +247,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusMinutes(15);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         order.startPay(PayType.TOSS);
         final Order persistOrder = orderRepository.save(order);
@@ -271,15 +269,17 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("30분 이상 전에, 그리고 마지막 스캔 시각 후에 마지막으로 변경된 생성 상태 주문이면 취소하고 재고를 복구하지 않는다.")
     void cancelIncompleteOrders_cancelCreatedOrderLastModifiedMoreThan30MinutesAndAfterLastScanTime() {
         // given
-        final LocalDateTime lastScanTime = LocalDateTime.now().minusHours(1);
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        final LocalDateTime lastScanTimeValue = LocalDateTime.now().minusHours(1);
+        final LastScanTime lastScanTime = LastScanTime.builder()
+                .timeValue(lastScanTimeValue)
+                .build();
+        lastScanTimeRepository.save(lastScanTime);
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -288,17 +288,14 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusMinutes(45);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         final Order persistOrder = orderRepository.save(order);
 
         // when
-        System.out.println(persistOrder.getLastModifiedAt());
         orderCancelService.cancelIncompleteOrders();
 
         // then
@@ -312,15 +309,17 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("마지막으로 변경된 지 30분이 되지 않은 생성 상태 주문이면 취소되지 않는다.")
     void cancelIncompleteOrders_doNotCancelCreatedOrderLastModifiedLessThan30MinutesAgo() {
         // given
-        final LocalDateTime lastScanTime = LocalDateTime.now().minusHours(1);
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        final LocalDateTime lastScanTimeValue = LocalDateTime.now().minusHours(1);
+        final LastScanTime lastScanTime = LastScanTime.builder()
+                .timeValue(lastScanTimeValue)
+                .build();
+        lastScanTimeRepository.save(lastScanTime);
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -329,12 +328,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusMinutes(15);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         final Order persistOrder = orderRepository.save(order);
 
@@ -352,15 +349,17 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("마지막 스캔 시점 전에 마지막으로 변경된 생성 상태 주문이면 취소되지 않는다.")
     void cancelIncompleteOrders_doNotCancelCreatedOrderLastModifiedBeforeLastScanTime() {
         // given
-        final LocalDateTime lastScanTime = LocalDateTime.now().minusHours(1);
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        final LocalDateTime lastScanTimeValue = LocalDateTime.now().minusHours(1);
+        final LastScanTime lastScanTime = LastScanTime.builder()
+                .timeValue(lastScanTimeValue)
+                .build();
+        lastScanTimeRepository.save(lastScanTime);
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -369,12 +368,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusHours(2);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         final Order persistOrder = orderRepository.save(order);
 
@@ -392,15 +389,13 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("처음 실행되는 경우 30분 이상 전에 마지막으로 변경된 생성 상태 주문이면 취소하고 재고를 복구하지 않는다.")
     void cancelIncompleteOrders_cancelCreatedOrderLastModifiedMoreThan30MinutesAgo_initialExecution() {
         // given
-        final LocalDateTime lastScanTime = null;
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        lastScanTimeRepository.save(LastScanTime.builder().build());
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -409,12 +404,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusHours(2);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         final Quantity orderQuantity = order.getOrderItems().get(0).getQuantity();
         final Order persistOrder = orderRepository.save(order);
@@ -433,15 +426,13 @@ class OrderCancelServiceExecutionTest {
     @DisplayName("처음 실행되는 경우 마지막으로 변경된 지 30분이 되지 않은 생성 상태 주문이면 취소되지 않는다.")
     void cancelIncompleteOrders_doNotCancelCreatedOrderLastModifiedLessThan30MinutesAgo_initialExecution() {
         // given
-        final LocalDateTime lastScanTime = null;
-        ReflectionTestUtils.setField(orderCancelService, "lastScanTime", lastScanTime);
+        lastScanTimeRepository.save(LastScanTime.builder().build());
 
         final Product 사과 = insertProduct("사과", 2000);
         final Quantity beforeStock = 사과.getStock();
 
         final Member member = DomainUtils.createMemberWithoutId("test@email.com", LocalDate.now(), Gender.FEMALE);
-        ReflectionTestUtils.setField(member, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(member, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(member, DEFAULT_CREATED_AT);
 
         final Member persistMember = memberRepository.save(member);
 
@@ -450,12 +441,10 @@ class OrderCancelServiceExecutionTest {
 
         final LocalDateTime orderCreatedAt = LocalDateTime.now().minusMinutes(15);
         final Order order = Order.from(persistMember.getId(), cartItems);
-        ReflectionTestUtils.setField(order, "createdAt", orderCreatedAt);
-        ReflectionTestUtils.setField(order, "lastModifiedAt", orderCreatedAt);
+        updateCreatedAtAndLastModifiedAt(order, orderCreatedAt);
 
         order.getOrderItems().forEach(orderItem -> {
-            ReflectionTestUtils.setField(orderItem, "createdAt", orderCreatedAt);
-            ReflectionTestUtils.setField(orderItem, "lastModifiedAt", orderCreatedAt);
+            updateCreatedAtAndLastModifiedAt(orderItem, orderCreatedAt);
         });
         final Order persistOrder = orderRepository.save(order);
 
@@ -471,8 +460,12 @@ class OrderCancelServiceExecutionTest {
 
     private Product insertProduct(final String productName, final long price) {
         final Product product = DomainUtils.createProductWithoutId(productName, price, 10);
-        ReflectionTestUtils.setField(product, "createdAt", DEFAULT_CREATED_AT);
-        ReflectionTestUtils.setField(product, "lastModifiedAt", DEFAULT_CREATED_AT);
+        updateCreatedAtAndLastModifiedAt(product, DEFAULT_CREATED_AT);
         return productRepository.save(product);
+    }
+
+    private void updateCreatedAtAndLastModifiedAt(final BaseTimeEntity baseTimeEntity, LocalDateTime time) {
+        ReflectionTestUtils.setField(baseTimeEntity, "createdAt", time);
+        ReflectionTestUtils.setField(baseTimeEntity, "lastModifiedAt", time);
     }
 }
