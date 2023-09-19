@@ -44,13 +44,7 @@ public class OrderCancelService {
                 scanEndTime);
         log.info("number of incomplete orders={}.", incompleteOrders.size());
 
-        boolean allSucceeded = true;
-        for (Order incompleteOrder : incompleteOrders) {
-            final boolean succeeded = cancelIncompleteOrders(incompleteOrder);
-            if (!succeeded) {
-                allSucceeded = false;
-            }
-        }
+        boolean allSucceeded = cancelOrders(incompleteOrders);
 
         if (allSucceeded) {
             lastScanTime.update(scanEndTime);
@@ -60,7 +54,18 @@ public class OrderCancelService {
         log.info("cancelling ended.");
     }
 
-    private boolean cancelIncompleteOrders(final Order incompleteOrder) {
+    private boolean cancelOrders(final List<Order> incompleteOrders) {
+        boolean allSucceeded = true;
+        for (Order incompleteOrder : incompleteOrders) {
+            final boolean succeeded = cancelOrder(incompleteOrder);
+            if (!succeeded) {
+                allSucceeded = false;
+            }
+        }
+        return allSucceeded;
+    }
+
+    private boolean cancelOrder(final Order incompleteOrder) {
         if (incompleteOrder.isCreated()) {
             orderService.cancelCreatedOrder(incompleteOrder);
             return true;
@@ -68,11 +73,11 @@ public class OrderCancelService {
 
         try {
             orderService.cancelPayingOrder(incompleteOrder);
+            return true;
         } catch (Exception e) {
             log.warn("exception thrown while cancelling order. order id={}.", incompleteOrder.getId());
             return false;
         }
-        return true;
     }
 
     private LastScanTime getLastScanTime() {
