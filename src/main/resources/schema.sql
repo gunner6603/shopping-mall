@@ -104,6 +104,12 @@ CREATE TABLE IF NOT EXISTS order_stats
     `last_modified_at` datetime              NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS last_scan_time
+(
+    `id`               bigint auto_increment NOT NULL primary key,
+    `time_value`       datetime              NULL
+);
+
 create index idx_2 on orders (last_modified_at);
 create index idx_member_orders on orders (member_id);
 
