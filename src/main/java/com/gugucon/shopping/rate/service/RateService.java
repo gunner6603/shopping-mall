@@ -42,7 +42,7 @@ public class RateService {
         final short score = request.getScore();
         validateScoreRange(score);
 
-        final OrderItem orderItem = searchOrderItem(principal.getId(), request.getOrderItemId());
+        final OrderItem orderItem = findCompleteOrderItemBy(principal.getId(), request.getOrderItemId());
         validateDuplicateRate(orderItem.getId());
 
         final Rate rate = Rate.builder()
@@ -110,7 +110,7 @@ public class RateService {
         }
     }
 
-    private OrderItem searchOrderItem(final Long memberId, final Long orderItemId) {
+    private OrderItem findCompleteOrderItemBy(final Long memberId, final Long orderItemId) {
         return orderItemRepository.findByOrderIdAndMemberIdAndOrderStatus(memberId, orderItemId, OrderStatus.COMPLETED)
             .orElseThrow(() -> new ShoppingException(ErrorCode.INVALID_ORDER_ITEM));
     }

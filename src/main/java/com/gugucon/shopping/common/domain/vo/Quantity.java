@@ -21,7 +21,7 @@ public class Quantity {
     private Integer value;
 
     private Quantity(final Integer value) {
-        validateRange(value);
+        validateNonNegative(value);
         this.value = value;
     }
 
@@ -33,7 +33,7 @@ public class Quantity {
         return value.equals(ZERO);
     }
 
-    private void validateRange(final Integer value) {
+    private void validateNonNegative(final Integer value) {
         if (value < ZERO) {
             throw new ShoppingException(ErrorCode.INVALID_QUANTITY);
         }

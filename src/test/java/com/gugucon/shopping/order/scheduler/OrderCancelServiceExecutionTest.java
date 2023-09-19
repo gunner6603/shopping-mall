@@ -93,7 +93,6 @@ class OrderCancelServiceExecutionTest {
         final Order persistOrder = orderRepository.save(order);
 
         // when
-        System.out.println(persistOrder.getLastModifiedAt());
         orderCancelService.cancelIncompleteOrders();
 
         // then

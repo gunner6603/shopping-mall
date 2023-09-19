@@ -101,7 +101,6 @@ public class OrderService {
         final Order order = orderRepository.findByIdAndMemberIdExclusively(orderPayRequest.getOrderId(), memberId)
                 .orElseThrow(() -> new ShoppingException(ErrorCode.INVALID_ORDER));
 
-        order.validateNotCanceled();
         order.startPay(orderPayRequest.getPayType());
         decreaseStock(order);
         return OrderPayResponse.from(order);
