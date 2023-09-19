@@ -21,7 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_TOKEN_TYPE = "Bearer ";
     private static final String AUTHORIZATION = "Authorization";
-
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     private final AuthenticationManager authenticationManager;
 
     @Override

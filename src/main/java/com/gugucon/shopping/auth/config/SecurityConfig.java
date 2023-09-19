@@ -52,19 +52,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        return new JwtAuthenticationFilter(authenticationManager(authenticationConfiguration));
-    }
-
-    @Bean
-    public FilterRegistrationBean<JwtAuthenticationFilter> register(final JwtAuthenticationFilter authFilter) {
-        final FilterRegistrationBean<JwtAuthenticationFilter> registerBean = new FilterRegistrationBean<>(authFilter);
-        registerBean.setEnabled(false);
-        return registerBean;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(final AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+        return new JwtAuthenticationFilter(authenticationConfiguration.getAuthenticationManager());
     }
 
     @Bean
