@@ -1,10 +1,14 @@
 # ZI9ZA9 (지구재구)
 우아한테크캠프 1팀 프로젝트
 
-[📝 프로젝트 위키](https://github.com/wootecam-gugucon/shopping-mall/wiki)
+## 리팩토링
+### 필수사항
+- [ ] 추천 상품 정보 캐싱 (Redis 사용, 1일 단위로 업데이트)
+- [ ] 데이터베이스 이중화 (MariaDB 레플리케이션 사용)
+- [ ] 통계 테이블 업데이트 로직 이벤트 및 메시지 큐로 처리해보기 (Kafka 사용)
 
-<img width="922" alt="image" src="https://github.com/wootecam-gugucon/shopping-mall/assets/64001680/a84d0eb1-023e-42f2-8f66-f15936e41344">
-<img width="922" alt="image" src="https://github.com/wootecam-gugucon/shopping-mall/assets/64001680/813b8bea-8d5d-4102-96b6-ece5f9ff01fc">
+### 선택사항
+- [ ] 메인 페이지 캐싱 및 성능 테스트
 
 ## 특징
 
