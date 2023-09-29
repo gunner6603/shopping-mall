@@ -3,6 +3,7 @@ package com.gugucon.shopping.order.service;
 import com.gugucon.shopping.common.config.JpaConfig;
 import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
+import com.gugucon.shopping.item.service.OrderStatService;
 import com.gugucon.shopping.member.domain.entity.Member;
 import com.gugucon.shopping.member.repository.MemberRepository;
 import com.gugucon.shopping.order.domain.PayType;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DataJpaTest
-@Import(value = {OrderService.class, JpaConfig.class})
+@Import(value = {OrderService.class, JpaConfig.class, OrderStatService.class})
 @DisplayName("OrderService 통합 테스트")
 class OrderServiceTest {
 
