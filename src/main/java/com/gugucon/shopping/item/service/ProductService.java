@@ -4,25 +4,32 @@ import com.gugucon.shopping.common.dto.response.PagedResponse;
 import com.gugucon.shopping.common.dto.response.SlicedResponse;
 import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
-import com.gugucon.shopping.item.infrastructure.SearchCondition;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.item.dto.response.ProductDetailResponse;
+import com.gugucon.shopping.item.dto.response.ProductDetailResponses;
 import com.gugucon.shopping.item.dto.response.ProductResponse;
+import com.gugucon.shopping.item.infrastructure.ProductCache;
+import com.gugucon.shopping.item.infrastructure.SearchCondition;
 import com.gugucon.shopping.item.repository.ProductRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.List;
+
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductCache productCache;
 
     public PagedResponse<ProductResponse> readAllProducts(final Pageable pageable) {
         final Page<Product> products = productRepository.findAll(pageable);
@@ -96,8 +103,30 @@ public class ProductService {
     public SlicedResponse<ProductDetailResponse> getRecommendations(final Long productId, final Pageable pageable) {
         validateProductExistence(productId);
 
-        final Slice<Product> recommendations = productRepository.findRecommendedProducts(productId, pageable);
+        final Slice<Product> recommendations = productRepository.findRecommendedProductsAsSlice(productId, pageable);
         return convertToSlice(recommendations);
+    }
+
+    public SlicedResponse<ProductDetailResponse> getRecommendationsViaCache(final Long productId,
+                                                                            final Pageable pageable) {
+        validateProductExistence(productId);
+        final ProductDetailResponses productDetailResponses = productCache.getRecommendations(productId);
+        final List<ProductDetailResponse> recommendations = productDetailResponses.getContents();
+        final int fromIndex = (int) pageable.getOffset();
+        final int toIndex = fromIndex + pageable.getPageSize();
+        final List<ProductDetailResponse> contents = resolveContents(recommendations, fromIndex, toIndex);
+        final boolean hasNextPage = toIndex < recommendations.size();
+
+        return new SlicedResponse<>(contents, hasNextPage, pageable.getPageNumber(), pageable.getPageSize());
+    }
+
+    private List<ProductDetailResponse> resolveContents(final List<ProductDetailResponse> recommendations,
+                                                        final int fromIndex, final int toIndex) {
+        final int size = recommendations.size();
+        if (fromIndex >= size) {
+            return Collections.emptyList();
+        }
+        return recommendations.subList(fromIndex, Math.min(toIndex, size));
     }
 
     private SlicedResponse<ProductDetailResponse> convertToSlice(final Slice<Product> products) {
