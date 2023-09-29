@@ -20,7 +20,7 @@ public class ProductCache {
 
     private final ProductRepository productRepository;
 
-    @Cacheable(cacheNames = "simple", key = "'recommandation:' + #productId")
+    @Cacheable(cacheNames = "recommendation", key = "#productId")
     public ProductDetailResponses getRecommendations(final Long productId) {
         log.info("cache method invoked");
         final Pageable pageable = Pageable.ofSize(RECOMMENDATION_SIZE)
