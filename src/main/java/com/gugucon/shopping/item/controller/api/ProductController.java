@@ -63,6 +63,6 @@ public class ProductController {
     @ResponseStatus(HttpStatus.OK)
     public SlicedResponse<ProductDetailResponse> getRecommendations(@PathVariable final Long productId,
                                                               @PageableDefault(size = 5) final Pageable pageable) {
-        return productService.getRecommendations(productId, pageable);
+        return productService.getRecommendationsViaCache(productId, pageable);
     }
 }
