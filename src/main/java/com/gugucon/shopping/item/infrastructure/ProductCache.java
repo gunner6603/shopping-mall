@@ -22,7 +22,7 @@ public class ProductCache {
 
     private final ProductRepository productRepository;
 
-    @Cacheable(cacheNames = "rec", key = "#productId")
+    @Cacheable(cacheNames = "rec", key = "#productId", sync = true)
     public ProductIds getRecommendationIds(final Long productId) {
         log.info("cache method invoked");
         final Pageable pageable = Pageable.ofSize(RECOMMENDATION_SIZE)
