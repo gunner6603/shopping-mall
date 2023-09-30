@@ -59,14 +59,14 @@ public class ProductController {
         return productService.getProductDetail(productId);
     }
 
-    @GetMapping("/{productId}/recommend")
+    @GetMapping("/{productId}/recommend/no-cache")
     @ResponseStatus(HttpStatus.OK)
     public SlicedResponse<ProductDetailResponse> getRecommendations(@PathVariable final Long productId,
                                                                            @PageableDefault(size = 5) final Pageable pageable) {
         return productService.getRecommendations(productId, pageable);
     }
 
-    @GetMapping("/{productId}/recommend/cache")
+    @GetMapping("/{productId}/recommend")
     @ResponseStatus(HttpStatus.OK)
     public SlicedResponse<ProductDetailResponse> getRecommendationsViaCache(@PathVariable final Long productId,
                                                                             @PageableDefault(size = 5) final Pageable pageable) {
