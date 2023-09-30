@@ -6,9 +6,6 @@ import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.member.domain.vo.Gender;
 import jakarta.persistence.LockModeType;
 import jakarta.validation.constraints.NotNull;
-
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -18,6 +15,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -74,12 +74,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             final Pageable pageable);
 
     @Query(value = "select p.* from order_items oi "
-        + "inner join products p on oi.product_id = p.id "
-        + "where order_id in ("
-        + " select order_id from order_items where order_items.product_id = :productId "
-        + ") and p.id != :productId "
-        + "group by p.id "
-        + "order by count(oi.id) desc, p.id desc", nativeQuery = true)
+            + "inner join products p on oi.product_id = p.id "
+            + "where oi.order_id in ("
+            + "select inner_o.id "
+            + "from order_items inner_oi "
+            + "inner join orders inner_o on inner_oi.order_id = inner_o.id "
+            + "where inner_oi.product_id = :productId and inner_o.status = 'COMPLETED'"
+            + ") and p.id != :productId "
+            + "group by p.id "
+            + "order by count(oi.id) desc, p.id desc", nativeQuery = true)
     Slice<Product> findRecommendedProducts(@Param("productId") final Long productId, final Pageable pageable);
 
     @Query("SELECT new com.gugucon.shopping.item.repository.dto.ProductIdOrderIdPairDto(oi.productId, o.id) " +
