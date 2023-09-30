@@ -1,6 +1,7 @@
 package com.gugucon.shopping.item.repository;
 
 import com.gugucon.shopping.item.domain.entity.Product;
+import com.gugucon.shopping.item.repository.dto.ProductIdOrderIdPairDto;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.member.domain.vo.Gender;
 import jakarta.persistence.LockModeType;
@@ -79,14 +80,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         + ") and p.id != :productId "
         + "group by p.id "
         + "order by count(oi.id) desc, p.id desc", nativeQuery = true)
-    Slice<Product> findRecommendedProductsAsSlice(@Param("productId") final Long productId, final Pageable pageable);
+    Slice<Product> findRecommendedProducts(@Param("productId") final Long productId, final Pageable pageable);
 
-    @Query(value = "select p.* from order_items oi "
-            + "inner join products p on oi.product_id = p.id "
-            + "where order_id in ("
-            + " select order_id from order_items where order_items.product_id = :productId "
-            + ") and p.id != :productId "
-            + "group by p.id "
-            + "order by count(oi.id) desc, p.id desc", nativeQuery = true)
-    List<Product> findRecommendedProductsAsList(@Param("productId") final Long productId, final Pageable pageable);
+    @Query("SELECT new com.gugucon.shopping.item.repository.dto.ProductIdOrderIdPairDto(oi.productId, o.id) " +
+            "FROM Order o " +
+            "INNER JOIN o.orderItems oi")
+    List<ProductIdOrderIdPairDto> findAllIdWithOrderId();
+
+    @Query("SELECT p.id FROM Product p")
+    List<Long> findAllId();
 }

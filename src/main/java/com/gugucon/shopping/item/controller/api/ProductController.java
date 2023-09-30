@@ -62,7 +62,14 @@ public class ProductController {
     @GetMapping("/{productId}/recommend")
     @ResponseStatus(HttpStatus.OK)
     public SlicedResponse<ProductDetailResponse> getRecommendations(@PathVariable final Long productId,
-                                                              @PageableDefault(size = 5) final Pageable pageable) {
+                                                                           @PageableDefault(size = 5) final Pageable pageable) {
+        return productService.getRecommendations(productId, pageable);
+    }
+
+    @GetMapping("/{productId}/recommend/cache")
+    @ResponseStatus(HttpStatus.OK)
+    public SlicedResponse<ProductDetailResponse> getRecommendationsViaCache(@PathVariable final Long productId,
+                                                                            @PageableDefault(size = 5) final Pageable pageable) {
         return productService.getRecommendationsViaCache(productId, pageable);
     }
 }

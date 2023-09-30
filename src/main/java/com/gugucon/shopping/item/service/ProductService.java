@@ -6,7 +6,7 @@ import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.item.dto.response.ProductDetailResponse;
-import com.gugucon.shopping.item.dto.response.ProductDetailResponses;
+import com.gugucon.shopping.item.dto.response.ProductIds;
 import com.gugucon.shopping.item.dto.response.ProductResponse;
 import com.gugucon.shopping.item.infrastructure.ProductCache;
 import com.gugucon.shopping.item.infrastructure.SearchCondition;
@@ -16,11 +16,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -103,30 +108,40 @@ public class ProductService {
     public SlicedResponse<ProductDetailResponse> getRecommendations(final Long productId, final Pageable pageable) {
         validateProductExistence(productId);
 
-        final Slice<Product> recommendations = productRepository.findRecommendedProductsAsSlice(productId, pageable);
+        final Slice<Product> recommendations = productRepository.findRecommendedProducts(productId, pageable);
         return convertToSlice(recommendations);
     }
 
     public SlicedResponse<ProductDetailResponse> getRecommendationsViaCache(final Long productId,
                                                                             final Pageable pageable) {
         validateProductExistence(productId);
-        final ProductDetailResponses productDetailResponses = productCache.getRecommendations(productId);
-        final List<ProductDetailResponse> recommendations = productDetailResponses.getContents();
+        final ProductIds productIds = productCache.getRecommendationIds(productId);
+        final List<Long> allRecommendationIds = productIds.getContents();
         final int fromIndex = (int) pageable.getOffset();
         final int toIndex = fromIndex + pageable.getPageSize();
-        final List<ProductDetailResponse> contents = resolveContents(recommendations, fromIndex, toIndex);
-        final boolean hasNextPage = toIndex < recommendations.size();
+        final List<Long> pagedIds = page(allRecommendationIds, fromIndex, toIndex);
+        final List<Product> pagedRecommendation = sort(productRepository.findAllById(pagedIds), pagedIds);
+        final boolean hasNext = toIndex < allRecommendationIds.size();
 
-        return new SlicedResponse<>(contents, hasNextPage, pageable.getPageNumber(), pageable.getPageSize());
+        return convertToSlice(new SliceImpl<>(pagedRecommendation, pageable, hasNext));
     }
 
-    private List<ProductDetailResponse> resolveContents(final List<ProductDetailResponse> recommendations,
-                                                        final int fromIndex, final int toIndex) {
-        final int size = recommendations.size();
+    private List<Product> sort(final List<Product> unorderedProducts, final List<Long> orderedProductIds) {
+        final Map<Long, Product> idToProduct = unorderedProducts.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        return orderedProductIds.stream()
+                .map(idToProduct::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<Long> page(final List<Long> ids, final int fromIndex, final int toIndex) {
+        final int size = ids.size();
         if (fromIndex >= size) {
             return Collections.emptyList();
         }
-        return recommendations.subList(fromIndex, Math.min(toIndex, size));
+        return ids.subList(fromIndex, Math.min(toIndex, size));
     }
 
     private SlicedResponse<ProductDetailResponse> convertToSlice(final Slice<Product> products) {
