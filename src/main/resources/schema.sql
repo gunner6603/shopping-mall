@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS last_scan_time
     `time_value`       datetime              NULL
 );
 
-create index idx_2 on orders (last_modified_at);
+create index idx_2 on orders (created_at);
 create index idx_member_orders on orders (member_id);
 
 create index idx_1 on order_items (product_id, quantity);

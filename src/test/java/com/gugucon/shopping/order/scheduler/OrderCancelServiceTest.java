@@ -54,7 +54,7 @@ class OrderCancelServiceTest {
         order.startPay(PayType.TOSS);
 
         doReturn(List.of(order)).when(orderRepository)
-                .findAllByStatusInAndLastModifiedAtBetweenWithOrderItems(any(), any(), any());
+                .findAllByStatusInAndCreatedAtBetweenWithOrderItems(any(), any(), any());
         doThrow(new RuntimeException()).when(orderService).cancelPayingOrder(order);
 
         // when

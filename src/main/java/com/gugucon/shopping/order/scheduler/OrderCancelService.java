@@ -38,7 +38,7 @@ public class OrderCancelService {
         final LocalDateTime scanStartTime = lastScanTime.hasNullValue() ? DEFAULT_SCAN_START_TIME : lastScanTime.getTimeValue();
         final LocalDateTime scanEndTime = LocalDateTime.now().minus(CANCEL_INTERVAL);
 
-        final List<Order> incompleteOrders = orderRepository.findAllByStatusInAndLastModifiedAtBetweenWithOrderItems(
+        final List<Order> incompleteOrders = orderRepository.findAllByStatusInAndCreatedAtBetweenWithOrderItems(
                 INCOMPLETE_STATUSES,
                 scanStartTime,
                 scanEndTime);
