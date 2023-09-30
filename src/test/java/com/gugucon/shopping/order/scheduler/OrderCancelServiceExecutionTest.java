@@ -2,6 +2,7 @@ package com.gugucon.shopping.order.scheduler;
 
 import com.gugucon.shopping.common.domain.entity.BaseTimeEntity;
 import com.gugucon.shopping.common.domain.vo.Quantity;
+import com.gugucon.shopping.integration.config.DatabaseTruncationTestExecutionListener;
 import com.gugucon.shopping.item.domain.entity.CartItem;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.item.repository.ProductRepository;
@@ -19,9 +20,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
@@ -33,7 +36,9 @@ import static com.gugucon.shopping.order.domain.entity.Order.OrderStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@EnableJpaAuditing(setDates = false, modifyOnCreate = false)
+@EnableJpaAuditing(setDates = false)
+@AutoConfigureTestDatabase
+@TestExecutionListeners(value = DatabaseTruncationTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 @ActiveProfiles({"scheduling-test", "test"})
 class OrderCancelServiceExecutionTest {
 
@@ -56,15 +61,6 @@ class OrderCancelServiceExecutionTest {
 
     @Autowired
     private LastScanTimeRepository lastScanTimeRepository;
-
-    @AfterEach
-    void tearDown() {
-        orderItemRepository.deleteAll();
-        orderRepository.deleteAll();
-        memberRepository.deleteAll();
-        productRepository.deleteAll();
-        lastScanTimeRepository.deleteAll();
-    }
 
     @Test
     @DisplayName("30분 이상 전에, 그리고 마지막 스캔 시각 후에 마지막으로 변경된 결제중 주문이면 취소하고 재고를 복구한다.")
