@@ -52,9 +52,14 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.cache.CacheType;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.http.HttpStatus;
 
 @IntegrationTest
+@EnableCaching
+@AutoConfigureCache(cacheProvider = CacheType.SIMPLE)
 @DisplayName("상품 기능 통합 테스트")
 class ProductIntegrationTest {
 
