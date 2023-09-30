@@ -87,7 +87,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT new com.gugucon.shopping.item.repository.dto.ProductIdOrderIdPairDto(oi.productId, o.id) " +
             "FROM Order o " +
-            "INNER JOIN o.orderItems oi")
+            "INNER JOIN o.orderItems oi " +
+            "WHERE o.status = 'COMPLETED'")
     List<ProductIdOrderIdPairDto> findAllIdWithOrderId();
 
     @Query("SELECT p.id FROM Product p")
