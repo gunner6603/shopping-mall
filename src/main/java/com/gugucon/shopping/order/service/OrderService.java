@@ -8,8 +8,8 @@ import com.gugucon.shopping.item.domain.entity.CartItem;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.item.repository.CartItemRepository;
 import com.gugucon.shopping.item.repository.ProductRepository;
-import com.gugucon.shopping.stat.service.OrderStatService;
 import com.gugucon.shopping.order.domain.entity.Order;
+import com.gugucon.shopping.order.domain.event.OrderCompleteEvent;
 import com.gugucon.shopping.order.dto.request.OrderPayRequest;
 import com.gugucon.shopping.order.dto.response.OrderDetailResponse;
 import com.gugucon.shopping.order.dto.response.OrderHistoryResponse;
@@ -17,6 +17,7 @@ import com.gugucon.shopping.order.dto.response.OrderPayResponse;
 import com.gugucon.shopping.order.dto.response.OrderResponse;
 import com.gugucon.shopping.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
-    private final OrderStatService orderStatService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderResponse order(final Long memberId) {
@@ -45,9 +46,9 @@ public class OrderService {
 
     @Transactional
     public void complete(final Order order, final MemberPrincipal principal) {
-        order.getOrderItems().forEach(orderItem -> orderStatService.updateOrderStatBy(principal, orderItem));
         cartItemRepository.deleteAllByMemberId(principal.getId());
         order.completePay();
+        eventPublisher.publishEvent(OrderCompleteEvent.from(order));
     }
 
     public OrderDetailResponse getOrderDetail(final Long orderId, final Long memberId) {
@@ -59,8 +60,8 @@ public class OrderService {
 
     public PagedResponse<OrderHistoryResponse> getOrderHistory(final Pageable pageable, final Long memberId) {
         final Page<Order> orders = orderRepository.findAllByMemberIdAndStatus(memberId,
-                                                                              Order.OrderStatus.COMPLETED,
-                                                                              pageable);
+                Order.OrderStatus.COMPLETED,
+                pageable);
 
         return convertToPage(orders);
     }
@@ -85,7 +86,7 @@ public class OrderService {
     public void cancelPayingOrder(final Order order) {
         order.getOrderItems()
                 .forEach(orderItem -> productRepository.increaseStockByIdAndValue(orderItem.getProductId(),
-                                                                                  orderItem.getQuantity().getValue()));
+                        orderItem.getQuantity().getValue()));
         order.cancel();
     }
 
