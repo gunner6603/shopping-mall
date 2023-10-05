@@ -1,6 +1,6 @@
-package com.gugucon.shopping.item.repository;
+package com.gugucon.shopping.stat.repository;
 
-import com.gugucon.shopping.item.domain.entity.OrderStat;
+import com.gugucon.shopping.stat.domain.entity.OrderStat;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.member.domain.vo.Gender;
 import org.springframework.data.jpa.repository.JpaRepository;

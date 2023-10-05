@@ -1,7 +1,7 @@
-package com.gugucon.shopping.item.service;
+package com.gugucon.shopping.stat.service;
 
 import com.gugucon.shopping.auth.dto.MemberPrincipal;
-import com.gugucon.shopping.item.repository.OrderStatRepository;
+import com.gugucon.shopping.stat.repository.OrderStatRepository;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.order.domain.entity.OrderItem;
 import lombok.RequiredArgsConstructor;

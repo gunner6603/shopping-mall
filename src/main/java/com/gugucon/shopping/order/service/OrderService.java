@@ -8,7 +8,7 @@ import com.gugucon.shopping.item.domain.entity.CartItem;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.item.repository.CartItemRepository;
 import com.gugucon.shopping.item.repository.ProductRepository;
-import com.gugucon.shopping.item.service.OrderStatService;
+import com.gugucon.shopping.stat.service.OrderStatService;
 import com.gugucon.shopping.order.domain.entity.Order;
 import com.gugucon.shopping.order.dto.request.OrderPayRequest;
 import com.gugucon.shopping.order.dto.response.OrderDetailResponse;

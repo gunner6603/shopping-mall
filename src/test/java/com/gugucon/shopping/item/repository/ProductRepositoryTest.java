@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gugucon.shopping.common.config.JpaConfig;
 import com.gugucon.shopping.common.domain.vo.Quantity;
-import com.gugucon.shopping.item.domain.entity.OrderStat;
+import com.gugucon.shopping.stat.domain.entity.OrderStat;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.member.domain.entity.Member;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
@@ -20,6 +20,7 @@ import com.gugucon.shopping.order.domain.entity.Order.OrderStatus;
 import com.gugucon.shopping.order.domain.entity.OrderItem;
 import com.gugucon.shopping.order.repository.OrderItemRepository;
 import com.gugucon.shopping.order.repository.OrderRepository;
+import com.gugucon.shopping.stat.repository.OrderStatRepository;
 import com.gugucon.shopping.utils.DomainUtils;
 import java.time.LocalDate;
 import java.util.List;

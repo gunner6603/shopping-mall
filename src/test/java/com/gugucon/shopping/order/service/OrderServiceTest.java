@@ -3,7 +3,7 @@ package com.gugucon.shopping.order.service;
 import com.gugucon.shopping.common.config.JpaConfig;
 import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
-import com.gugucon.shopping.item.service.OrderStatService;
+import com.gugucon.shopping.stat.service.OrderStatService;
 import com.gugucon.shopping.member.domain.entity.Member;
 import com.gugucon.shopping.member.repository.MemberRepository;
 import com.gugucon.shopping.order.domain.PayType;

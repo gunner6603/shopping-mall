@@ -26,7 +26,7 @@ import com.gugucon.shopping.integration.config.IntegrationTest;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.item.dto.request.CartItemInsertRequest;
 import com.gugucon.shopping.item.repository.ProductRepository;
-import com.gugucon.shopping.item.repository.RateStatRepository;
+import com.gugucon.shopping.stat.repository.RateStatRepository;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.member.domain.vo.Gender;
 import com.gugucon.shopping.member.dto.request.SignupRequest;

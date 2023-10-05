@@ -1,7 +1,7 @@
 package com.gugucon.shopping.utils;
 
-import com.gugucon.shopping.item.domain.entity.OrderStat;
-import com.gugucon.shopping.item.domain.entity.RateStat;
+import com.gugucon.shopping.stat.domain.entity.OrderStat;
+import com.gugucon.shopping.stat.domain.entity.RateStat;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.member.domain.vo.Gender;
 

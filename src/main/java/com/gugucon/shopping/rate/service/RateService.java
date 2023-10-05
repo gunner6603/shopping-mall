@@ -4,7 +4,7 @@ import com.gugucon.shopping.auth.dto.MemberPrincipal;
 import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
 import com.gugucon.shopping.item.repository.ProductRepository;
-import com.gugucon.shopping.item.repository.RateStatRepository;
+import com.gugucon.shopping.stat.repository.RateStatRepository;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.order.domain.entity.Order.OrderStatus;
 import com.gugucon.shopping.order.domain.entity.OrderItem;

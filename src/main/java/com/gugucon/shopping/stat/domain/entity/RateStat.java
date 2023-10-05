@@ -1,4 +1,4 @@
-package com.gugucon.shopping.item.domain.entity;
+package com.gugucon.shopping.stat.domain.entity;
 
 import com.gugucon.shopping.common.domain.entity.BaseTimeEntity;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
@@ -8,12 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
-@Table(name = "order_stats")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Table(name = "rate_stats")
 @Builder
 @Getter
-public class OrderStat extends BaseTimeEntity {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class RateStat extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,6 +29,9 @@ public class OrderStat extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @NotNull
     private Gender gender;
+
+    @NotNull
+    private Long totalScore;
 
     @NotNull
     private Long count;
