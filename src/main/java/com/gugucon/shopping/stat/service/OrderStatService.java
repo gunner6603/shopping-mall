@@ -28,7 +28,7 @@ public class OrderStatService {
     @Async("threadPoolTaskExecutor")
     @TransactionalEventListener
     public void handle(final OrderCompleteEvent orderCompleteEvent) {
-        final Order order = orderRepository.findById(orderCompleteEvent.getOrderId())
+        final Order order = orderRepository.findByIdWithOrderItems(orderCompleteEvent.getOrderId())
                 .orElseThrow(() -> new ShoppingException(ErrorCode.UNKNOWN_ERROR));
         final Member member = memberRepository.findById(order.getMemberId())
                 .orElseThrow((() -> new ShoppingException(ErrorCode.UNKNOWN_ERROR)));
