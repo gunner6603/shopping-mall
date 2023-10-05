@@ -18,8 +18,8 @@ public interface RateRepository extends JpaRepository<Rate, Long> {
     Optional<Rate> findByOrderItemId(final Long orderItemId);
 
     @Query("SELECT new com.gugucon.shopping.rate.repository.dto.AverageRateDto(sum(rs.count), sum(rs.totalScore)) "
-        + "FROM RateStat rs "
-        + "WHERE rs.productId = :productId")
+            + "FROM RateStat rs "
+            + "WHERE rs.productId = :productId")
     AverageRateDto findScoresByProductId(final Long productId);
 
     @Query("SELECT r.score FROM Order o " +
@@ -43,4 +43,9 @@ public interface RateRepository extends JpaRepository<Rate, Long> {
             "FROM RateStat rs " +
             "WHERE rs.productId = :productId")
     List<GroupAverageRateDto> findAllGroupsOfMemberGenderAndMemberBirthYear(final Long productId);
+
+    @Query("SELECT r FROM Rate r " +
+            "JOIN FETCH r.orderItem " +
+            "WHERE r.id = :id")
+    Optional<Rate> findByIdWithOrderItem(Long id);
 }

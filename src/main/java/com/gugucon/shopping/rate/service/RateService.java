@@ -4,12 +4,12 @@ import com.gugucon.shopping.auth.dto.MemberPrincipal;
 import com.gugucon.shopping.common.exception.ErrorCode;
 import com.gugucon.shopping.common.exception.ShoppingException;
 import com.gugucon.shopping.item.repository.ProductRepository;
-import com.gugucon.shopping.stat.repository.RateStatRepository;
 import com.gugucon.shopping.member.domain.vo.BirthYearRange;
 import com.gugucon.shopping.order.domain.entity.Order.OrderStatus;
 import com.gugucon.shopping.order.domain.entity.OrderItem;
 import com.gugucon.shopping.order.repository.OrderItemRepository;
 import com.gugucon.shopping.rate.domain.entity.Rate;
+import com.gugucon.shopping.rate.domain.event.RateCreateEvent;
 import com.gugucon.shopping.rate.dto.request.RateCreateRequest;
 import com.gugucon.shopping.rate.dto.response.GroupRateResponse;
 import com.gugucon.shopping.rate.dto.response.RateDetailResponse;
@@ -18,6 +18,7 @@ import com.gugucon.shopping.rate.repository.RateRepository;
 import com.gugucon.shopping.rate.repository.dto.AverageRateDto;
 import com.gugucon.shopping.rate.repository.dto.GroupAverageRateDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,7 @@ public class RateService {
     private final RateRepository rateRepository;
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
-    private final RateStatRepository rateStatRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void createRate(final MemberPrincipal principal, final RateCreateRequest request) {
@@ -51,10 +52,7 @@ public class RateService {
                 .build();
 
         rateRepository.save(rate);
-        rateStatRepository.updateRateStatByScore(score,
-                                                 orderItem.getProductId(),
-                                                 BirthYearRange.from(principal.getBirthDate()),
-                                                 principal.getGender());
+        eventPublisher.publishEvent(RateCreateEvent.from(rate, principal.getId()));
     }
 
     public RateResponse getRates(final Long productId) {
@@ -73,8 +71,8 @@ public class RateService {
     public RateResponse getCustomRate(final Long productId, final MemberPrincipal principal) {
         final BirthYearRange birthYearRange = BirthYearRange.from(principal.getBirthDate());
         final AverageRateDto rates = rateRepository.findScoresByMemberGenderAndMemberBirthYear(productId,
-                                                                                               principal.getGender(),
-                                                                                               birthYearRange);
+                principal.getGender(),
+                birthYearRange);
         final double averageRate = calculateAverageOf(rates);
         return new RateResponse(rates.getCount(), averageRate);
     }
@@ -112,13 +110,13 @@ public class RateService {
 
     private OrderItem findCompleteOrderItemBy(final Long memberId, final Long orderItemId) {
         return orderItemRepository.findByOrderIdAndMemberIdAndOrderStatus(memberId, orderItemId, OrderStatus.COMPLETED)
-            .orElseThrow(() -> new ShoppingException(ErrorCode.INVALID_ORDER_ITEM));
+                .orElseThrow(() -> new ShoppingException(ErrorCode.INVALID_ORDER_ITEM));
     }
 
     private void validateDuplicateRate(final Long orderItemId) {
         rateRepository.findByOrderItemId(orderItemId)
-            .ifPresent(rate -> {
-                throw new ShoppingException(ErrorCode.ALREADY_RATED);
-            });
+                .ifPresent(rate -> {
+                    throw new ShoppingException(ErrorCode.ALREADY_RATED);
+                });
     }
 }
