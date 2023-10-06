@@ -13,6 +13,7 @@ import com.gugucon.shopping.stat.repository.OrderStatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -26,6 +27,7 @@ public class OrderStatService {
     private final MemberRepository memberRepository;
 
     @Async("threadPoolTaskExecutor")
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener
     public void handle(final OrderCompleteEvent orderCompleteEvent) {
         final Order order = orderRepository.findByIdWithOrderItems(orderCompleteEvent.getOrderId())
