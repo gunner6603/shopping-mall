@@ -5,15 +5,16 @@ import com.gugucon.shopping.common.domain.vo.Quantity;
 import com.gugucon.shopping.item.domain.entity.CartItem;
 import com.gugucon.shopping.item.domain.entity.Product;
 import com.gugucon.shopping.member.domain.entity.Member;
-import com.gugucon.shopping.member.domain.vo.Email;
-import com.gugucon.shopping.member.domain.vo.Gender;
-import com.gugucon.shopping.member.domain.vo.Nickname;
-import com.gugucon.shopping.member.domain.vo.Password;
+import com.gugucon.shopping.member.domain.vo.*;
 import com.gugucon.shopping.order.domain.PayType;
 import com.gugucon.shopping.order.domain.entity.Order;
 import com.gugucon.shopping.order.domain.entity.Order.OrderStatus;
 import com.gugucon.shopping.order.domain.entity.OrderItem;
 import java.time.LocalDate;
+
+import com.gugucon.shopping.rate.domain.entity.Rate;
+import com.gugucon.shopping.stat.domain.entity.OrderStat;
+import com.gugucon.shopping.stat.domain.entity.RateStat;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -125,5 +126,31 @@ public class DomainUtils {
             .status(status)
             .payType(payType)
             .build();
+    }
+
+    public static Rate createRate(final OrderItem orderItem, final short score) {
+        return Rate.builder()
+                .orderItem(orderItem)
+                .score(score)
+                .build();
+    }
+
+    public static OrderStat createOrderStatWithoutId(final Member member, final Long productId) {
+        return OrderStat.builder()
+                .birthYearRange(BirthYearRange.from(member.getBirthDate()))
+                .gender(member.getGender())
+                .productId(productId)
+                .count(0L)
+                .build();
+    }
+
+    public static RateStat createRateStatWithoutId(final Member member, final Long productId) {
+        return RateStat.builder()
+                .birthYearRange(BirthYearRange.from(member.getBirthDate()))
+                .gender(member.getGender())
+                .productId(productId)
+                .count(0L)
+                .totalScore(0L)
+                .build();
     }
 }
