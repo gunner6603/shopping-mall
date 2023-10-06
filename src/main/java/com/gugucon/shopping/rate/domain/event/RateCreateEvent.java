@@ -12,7 +12,7 @@ public class RateCreateEvent {
     private Long rateId;
     private Long memberId;
 
-    public static RateCreateEvent from(final Rate rate, final Long memberId) {
+    public static RateCreateEvent of(final Rate rate, final Long memberId) {
         return new RateCreateEvent(rate.getId(), memberId);
     }
 }

@@ -65,7 +65,7 @@ class RateStatServiceTest {
         final Order order = orderRepository.save(Order.from(member.getId(), List.of(cartItem)));
         final Rate rate = rateRepository.save(createRate(order.getOrderItems().get(0), (short) 5));
         final RateStat rateStat = rateStatRepository.save(createRateStatWithoutId(member, product.getId()));
-        final RateCreateEvent rateCreateEvent = RateCreateEvent.from(rate, member.getId());
+        final RateCreateEvent rateCreateEvent = RateCreateEvent.of(rate, member.getId());
 
         // when
         rateStatService.handle(rateCreateEvent);

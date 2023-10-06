@@ -52,7 +52,7 @@ public class RateService {
                 .build();
 
         rateRepository.save(rate);
-        eventPublisher.publishEvent(RateCreateEvent.from(rate, principal.getId()));
+        eventPublisher.publishEvent(RateCreateEvent.of(rate, principal.getId()));
     }
 
     public RateResponse getRates(final Long productId) {
